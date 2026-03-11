@@ -3,14 +3,13 @@ import { Outlet } from "react-router-dom";
 
 const AppLayout = () => {
   return (
-    <div>
-      <main  className="min-h-screen container">
-        <Header />
+    <div className="bg-slate-950 min-h-screen flex flex-col w-full">
+      <Header />
+      <main className="flex-1 w-full">
         <Outlet />
-        {/* footer */}
       </main>
 
-      <div className="p-10 text-center bg-gray-800">
+      <div className="p-10 text-center bg-slate-900 text-white border-t border-slate-800 w-full">
         Made with ❤️ by Nagaraj
       </div>
     </div>
