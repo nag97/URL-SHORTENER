@@ -14,7 +14,7 @@ import { LogOut } from "lucide-react";
 
 const Header = () => {
   const navigate = useNavigate();
-  const user = true;
+  const user = false;
 
   return (
     <nav className="bg-slate-950 flex justify-between items-center px-6 py-4">

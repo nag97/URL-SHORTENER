@@ -1,24 +1,38 @@
 import { Input } from "../components/ui/input";
-import { Button, buttonVariants } from "../components/ui/button";
+import { Button } from "../components/ui/button";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
+} 
+from "../components/ui/accordion";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Landing = () => {
+  const [longUrl, setlongUrl] = useState("");
+  const navigate = useNavigate();
+
+  const handleShorten = (e) => {
+    e.preventDefault();
+    if (longUrl) navigate(`/auth?createNew=${longUrl}`);
+  };
   return (
     <div className="flex flex-col items-center text-white px-4 py-10 w-full">
       Landing Page
       <h2 className="my-10 sm:my-16 text-3xl sm:text-6xl text-white text-center font-extrabold">
         The only URL shortener you'll ever need👇
       </h2>
-      <form className="sm:h-14 flex flex-col sm:flex-row w-full md:w-2/4 gap-2">
+      <form
+        onSubmit={handleShorten}
+        className="sm:h-14 flex flex-col sm:flex-row w-full md:w-2/4 gap-2"
+      >
         <Input
           type="url"
+          value={longUrl}
           placeholder="Enter a URL to shorten"
-          //  onChange = {}
+          onChange={(e) => setlongUrl(e.target.value)}
           className="h-full flex-1 py-4 px-4"
         />
         <Button className="h-full" type="submit" variant="destructive">
@@ -52,9 +66,15 @@ const Landing = () => {
         </AccordionItem>
 
         <AccordionItem value="item-3">
-          <AccordionTrigger>What analytics are available for my shortened URLs?</AccordionTrigger>
+          <AccordionTrigger>
+            What analytics are available for my shortened URLs?
+          </AccordionTrigger>
           <AccordionContent>
-            Our URL shortener provides detailed analytics for each of your shortened URLs, including the number of clicks, geographic location of the clicks, referral sources, and the devices used to access the URLs. You can view these analytics in your dashboard to gain insights into the performance of your shortened URLs.
+            Our URL shortener provides detailed analytics for each of your
+            shortened URLs, including the number of clicks, geographic location
+            of the clicks, referral sources, and the devices used to access the
+            URLs. You can view these analytics in your dashboard to gain
+            insights into the performance of your shortened URLs.
           </AccordionContent>
         </AccordionItem>
       </Accordion>
