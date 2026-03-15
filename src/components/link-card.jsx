@@ -1,19 +1,11 @@
 import { Copy, Download, LinkIcon, Trash } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "./ui/button";
 import useFetch from "@/hooks/use-fetch";
 import { deleteUrl } from "@/db/apiUrls";
 import { BeatLoader } from "react-spinners";
 
-import PropTypes from "prop-types";
-
 const LinkCard = ({ url = {}, fetchUrls }) => {
-  // ✅ use shortCode to delete
-  const { loading: loadingDelete, fn: fnDelete } = useFetch(
-    deleteUrl,
-    url.shortCode,
-  );
-
+  const { loading: loadingDelete, fn: fnDelete } = useFetch(deleteUrl, url.shortCode);
   const fullShortUrl = `http://localhost:5173/${url?.shortCode}`;
 
   const downloadImage = () => {
@@ -26,57 +18,138 @@ const LinkCard = ({ url = {}, fetchUrls }) => {
     document.body.removeChild(anchor);
   };
 
+  const iconBtnStyle = {
+    background: "transparent",
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: "8px",
+    color: "#8892AA",
+    padding: "8px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "border-color 0.2s, color 0.2s",
+  };
+
   return (
-    <div className="flex flex-col md:flex-row gap-5 border p-4 bg-gray-900 rounded-lg">
+    <div
+      style={{
+        background: "#111111",
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: "16px",
+        padding: "20px",
+        display: "flex",
+        flexDirection: "row",
+        gap: "20px",
+        alignItems: "flex-start",
+        transition: "border-color 0.2s",
+      }}
+      onMouseOver={(e) => e.currentTarget.style.borderColor = "rgba(0,200,150,0.3)"}
+      onMouseOut={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
+    >
+      {/* QR */}
       {url?.qr && (
-        <img
-          src={url.qr}
-          className="h-32 object-contain ring ring-blue-500 self-start"
-          alt="qr code"
-        />
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: "10px",
+            padding: "6px",
+            flexShrink: 0,
+          }}
+        >
+          <img
+            src={url.qr}
+            style={{ height: "80px", width: "80px", objectFit: "contain", display: "block" }}
+            alt="qr code"
+          />
+        </div>
       )}
-      {/* ✅ navigate to link page by id */}
-      <Link to={`/link/${url?.id}`} className="flex flex-col flex-1">
-        <span className="text-3xl font-extrabold hover:underline cursor-pointer">
+
+      {/* Info */}
+      <Link
+        to={`/link/${url?.id}`}
+        style={{ flex: 1, textDecoration: "none", minWidth: 0 }}
+      >
+        {/* Title */}
+        <div
+          style={{
+            fontSize: "18px",
+            fontWeight: "700",
+            color: "#F0F4FF",
+            fontFamily: "'Syne', sans-serif",
+            marginBottom: "6px",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
           {url?.title}
-        </span>
-        {/* ✅ fixed field names + localhost URL */}
-        <span className="text-2xl text-blue-400 font-bold hover:underline cursor-pointer">
+        </div>
+
+        {/* Short URL — green */}
+        <div
+          style={{
+            fontSize: "15px",
+            fontWeight: "600",
+            color: "#00C896",
+            marginBottom: "6px",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
           {fullShortUrl}
-        </span>
-        <span className="flex items-center gap-1 hover:underline cursor-pointer">
-          <LinkIcon className="p-1" />
+        </div>
+
+        {/* Original URL — muted */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            color: "#4A5568",
+            fontSize: "13px",
+            marginBottom: "8px",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          <LinkIcon size={12} />
           {url?.originalUrl}
-        </span>
-        <span className="flex items-end font-extralight text-sm flex-1">
-          {url?.createdAt ? new Date(url.createdAt).toLocaleString() : ""}
-        </span>
+        </div>
+
+        {/* Date */}
+        {url?.createdAt && (
+          <div style={{ fontSize: "12px", color: "#4A5568" }}>
+            {new Date(url.createdAt).toLocaleString()}
+          </div>
+        )}
       </Link>
-      <div className="flex gap-2">
-        <Button
-          variant="ghost"
+
+      {/* Actions */}
+      <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+        <button
+          style={iconBtnStyle}
           onClick={() => navigator.clipboard.writeText(fullShortUrl)}
+          title="Copy"
         >
-          <Copy />
-        </Button>
-        <Button variant="ghost" onClick={downloadImage}>
-          <Download />
-        </Button>
-        <Button
-          variant="ghost"
+          <Copy size={16} />
+        </button>
+        <button style={iconBtnStyle} onClick={downloadImage} title="Download QR">
+          <Download size={16} />
+        </button>
+        <button
+          style={{ ...iconBtnStyle, color: "#FF6B6B", borderColor: "rgba(255,107,107,0.2)" }}
           onClick={() => fnDelete().then(() => fetchUrls())}
-          disabled={loadingDelete} // ✅ fixed typo
+          disabled={loadingDelete}
+          title="Delete"
         >
-          {loadingDelete ? <BeatLoader size={5} color="white" /> : <Trash />}
-        </Button>
+          {loadingDelete ? <BeatLoader size={4} color="#FF6B6B" /> : <Trash size={16} />}
+        </button>
       </div>
     </div>
   );
 };
 
 export default LinkCard;
-
-LinkCard.propTypes = {
-  url: PropTypes.object,
-  fetchUrls: PropTypes.func,
-};
