@@ -9,8 +9,6 @@ import { CreateLink } from "@/components/create-link";
 import LinkCard from "@/components/link-card";
 import Error from "@/components/error";
 
-import useFetch from "@/hooks/use-fetch";
-
 import { getUrls } from "@/db/apiUrls";
 import { getClicksForUrls } from "@/db/apiClicks";
 import { UrlState } from "@/context";
@@ -18,49 +16,53 @@ import { UrlState } from "@/context";
 const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchParams] = useSearchParams();
-  const longLink = searchParams.get("createNew"); // ✅ read URL param
+  const longLink = searchParams.get("createNew");
 
   const { user } = UrlState();
 
-  const {
-    loading,
-    error,
-    data: urls,
-    fn: fnUrls,
-  } = useFetch(getUrls, user.id);
+  const [urls, setUrls] = useState([]);
+  const [clicks, setClicks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const {
-    loading: loadingClicks,
-    data: clicks,
-    fn: fnClicks,
-  } = useFetch(getClicksForUrls, []); // ✅ start with empty array
+  // ✅ direct fetch — no useFetch wrapper confusion
+  const fetchUrls = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getUrls(user.id);
+      setUrls(data || []);
+      if (data?.length) {
+        const clickData = await getClicksForUrls(data.map((u) => u.id));
+        setClicks(clickData || []);
+      } else {
+        setClicks([]);
+      }
+    } catch (e) {
+      setError(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fnUrls();
+    fetchUrls();
   }, []);
 
-  useEffect(() => {
-    if (urls?.length) {
-      fnClicks(urls.map((url) => url.id)); // ✅ pass ids when urls are ready
-    }
-  }, [urls?.length]);
-
-  const filteredUrls = urls?.filter((url) =>
+  const filteredUrls = urls.filter((url) =>
     url.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <div className="flex flex-col gap-8">
-      {(loading || loadingClicks) && (
-        <BarLoader width={"100%"} color="#36d7b7" />
-      )}
+      {loading && <BarLoader width={"100%"} color="#36d7b7" />}
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Links Created</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>{urls?.length ?? 0}</p>
+            <p>{urls.length}</p>
           </CardContent>
         </Card>
         <Card>
@@ -68,14 +70,13 @@ const Dashboard = () => {
             <CardTitle>Total Clicks</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>{clicks?.length ?? 0}</p>
+            <p>{clicks.length}</p>
           </CardContent>
         </Card>
       </div>
       <div className="flex justify-between">
         <h1 className="text-4xl font-extrabold">My Links</h1>
-        {/* ✅ pass longLink so CreateLink can auto-open with pre-filled URL */}
-        <CreateLink fetchUrls={fnUrls} longLink={longLink} />
+        <CreateLink fetchUrls={fetchUrls} longLink={longLink} />
       </div>
       <div className="relative">
         <Input
@@ -87,8 +88,8 @@ const Dashboard = () => {
         <Filter className="absolute top-2 right-2 p-1" />
       </div>
       {error && <Error message={error?.message} />}
-      {(filteredUrls || []).map((url, i) => (
-        <LinkCard key={i} url={url} fetchUrls={fnUrls} />
+      {filteredUrls.map((url, i) => (
+        <LinkCard key={i} url={url} fetchUrls={fetchUrls} />
       ))}
     </div>
   );

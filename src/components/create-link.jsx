@@ -18,18 +18,17 @@ import { QRCode } from "react-qrcode-logo";
 import { UrlState } from "@/context";
 
 export function CreateLink({ fetchUrls, longLink }) {
-  const { user } = UrlState(); // ✅ use context, not raw localStorage
-  const ref = useRef();
+  const { user } = UrlState();
+  const qrRef = useRef();
   const [open, setOpen] = useState(false);
   const [errors, setErrors] = useState({});
   const [formValues, setFormValues] = useState({
     title: "",
-    longUrl: longLink || "", // ✅ pre-fill from dashboard param
+    longUrl: longLink || "",
     customUrl: "",
   });
   const [loading, setLoading] = useState(false);
 
-  // ✅ auto-open dialog if longLink is passed in
   useEffect(() => {
     if (longLink) setOpen(true);
   }, [longLink]);
@@ -61,15 +60,21 @@ export function CreateLink({ fetchUrls, longLink }) {
     setLoading(true);
     try {
       await schema.validate(formValues, { abortEarly: false });
-      const canvas = ref.current?.canvasRef?.current;
+
+      // ✅ find the canvas element directly from the DOM inside the ref container
       let blob = undefined;
-      if (canvas) {
-        blob = await new Promise((resolve) => canvas.toBlob(resolve));
+      if (qrRef.current) {
+        const canvas = qrRef.current.querySelector("canvas");
+        if (canvas) {
+          blob = await new Promise((resolve) => canvas.toBlob(resolve));
+        }
       }
+
       const data = {
         ...formValues,
-        user_id: user.id, // ✅ from context
+        user_id: user.id,
       };
+
       await createUrl(data, blob);
       if (fetchUrls) fetchUrls();
       setOpen(false);
@@ -99,9 +104,12 @@ export function CreateLink({ fetchUrls, longLink }) {
           <DialogTitle className="font-bold text-2xl">Create New</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          {formValues?.longUrl && (
-            <QRCode ref={ref} size={250} value={formValues?.longUrl} />
-          )}
+          {/* ✅ wrap QRCode in a div we can query */}
+          <div ref={qrRef}>
+            {formValues?.longUrl && (
+              <QRCode size={250} value={formValues.longUrl} />
+            )}
+          </div>
           <Input
             id="title"
             placeholder="Short Link's Title"
