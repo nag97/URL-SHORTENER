@@ -1,10 +1,11 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { initializeDatabase, query } from "./db.js";
-import authRoutes from "../backend/routes/auth.js";
-import urlRoutes from "../backend/routes/urls.js";
-import redirectRoutes from "../backend/routes/redirect.js";
+import { initializeDatabase, query } from "./models/db.js";
+import authRoutes from "./routes/auth.js";
+import urlRoutes from "./routes/urls.js";
+import redirectRoutes from "./routes/redirect.js";
+import { v4 as uuid } from "uuid";
 
 dotenv.config();
 
@@ -64,7 +65,6 @@ app.get("/:shortCode", async (req, res) => {
 // Helper function to record click
 async function recordClick(urlId) {
   try {
-    const { v4: uuid } = await import("uuid");
     await query("INSERT INTO clicks (id, url_id) VALUES ($1, $2)", [
       uuid(),
       urlId,
@@ -92,11 +92,6 @@ app.use((err, req, res, next) => {
   res
     .status(err.status || 500)
     .json({ error: err.message || "Internal server error" });
-});
-
-app.listen(PORT, () => {
-  console.log(`Backend running on port ${PORT}`);
-});
 });
 
 app.listen(PORT, () => {
