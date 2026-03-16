@@ -13,6 +13,12 @@ const RedirectLink = () => {
         // ✅ get the full url object by shortCode
         const url = await getLongUrl(id);
 
+        console.log("=== REDIRECT DEBUG ===");
+        console.log("Short Code (id):", id);
+        console.log("Fetched URL object:", url);
+        console.log("Original URL value:", url?.originalUrl);
+        console.log("=== END DEBUG ===");
+
         if (!url) {
           console.error("Short URL not found:", id);
           return;
@@ -28,6 +34,7 @@ const RedirectLink = () => {
         });
 
         // ✅ redirect to original URL
+        console.log("Redirecting to:", url.originalUrl);
         window.location.href = url.originalUrl;
       } catch (e) {
         console.error("Redirect error:", e);
