@@ -4,7 +4,7 @@ import { getCachedLink, setCachedLink } from '@/lib/redis'
 
 const RESERVED = ['dashboard', 'auth', 'api', 'link', '_next', 'favicon.ico', 'public']
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const code = pathname.split('/')[1]
 
