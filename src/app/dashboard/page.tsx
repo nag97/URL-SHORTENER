@@ -19,21 +19,21 @@ export default function Dashboard() {
   const supabase = createClient();
   const router = useRouter();
 
+  async function loadLinks(userId: string) {
+    const { data } = await supabase
+      .from("short_links")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    setUrls(data || []);
+  }
+
   useEffect(() => {
     async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return router.push("/auth");
       setUser(user);
-
-      const { data } = await supabase
-        .from("short_links")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      setUrls(data || []);
+      await loadLinks(user.id);
       setLoading(false);
     }
     load();
@@ -59,14 +59,7 @@ export default function Dashboard() {
       </div>
 
       <CreateLink
-        onCreated={() => {
-          supabase
-            .from("short_links")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false })
-            .then(({ data }) => setUrls(data || []));
-        }}
+        onCreated={() => loadLinks(user.id)}
         userId={user.id}
       />
 
@@ -101,11 +94,13 @@ function CreateLink({
   const [originalUrl, setOriginalUrl] = useState("");
   const [customCode, setCustomCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const supabase = createClient();
 
   async function handleCreate() {
     if (!title || !originalUrl) return;
     setLoading(true);
+    setError("");
 
     const code = customCode || Math.random().toString(36).substring(2, 8);
 
@@ -116,7 +111,9 @@ function CreateLink({
       title,
     });
 
-    if (!error) {
+    if (error) {
+      setError(error.message.includes("duplicate") ? "That custom code is already taken." : error.message);
+    } else {
       setTitle("");
       setOriginalUrl("");
       setCustomCode("");
@@ -148,6 +145,7 @@ function CreateLink({
           onChange={(e) => setCustomCode(e.target.value)}
           className="border p-2 rounded"
         />
+        {error && <p className="text-red-500 text-sm">{error}</p>}
         <button
           onClick={handleCreate}
           disabled={loading}
@@ -170,10 +168,23 @@ function LinkCard({
   const supabase = createClient();
   const router = useRouter();
   const shortUrl = `${window.location.origin}/${url.code}`;
+  const [deleting, setDeleting] = useState(false);
 
   async function handleDelete() {
+    setDeleting(true);
+
+    // 1. Delete from Supabase
     await supabase.from("short_links").delete().eq("id", url.id);
+
+    // 2. Invalidate Redis cache so stale redirects stop immediately
+    await fetch("/api/cache-invalidate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: url.code }),
+    }).catch(() => {}); // Cache invalidation failure is non-critical
+
     onDeleted();
+    setDeleting(false);
   }
 
   return (
@@ -200,9 +211,10 @@ function LinkCard({
         </button>
         <button
           onClick={handleDelete}
-          className="text-xs border border-red-300 text-red-500 px-2 py-1 rounded"
+          disabled={deleting}
+          className="text-xs border border-red-300 text-red-500 px-2 py-1 rounded disabled:opacity-50"
         >
-          Delete
+          {deleting ? "..." : "Delete"}
         </button>
       </div>
     </div>
