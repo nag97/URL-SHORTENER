@@ -1,222 +1,81 @@
-"use client";
+import Link from "next/link";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-
-interface ShortLink {
-  id: string;
-  code: string;
-  original_url: string;
-  title: string;
-  created_at: string;
-}
-
-export default function Dashboard() {
-  const [urls, setUrls] = useState<ShortLink[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const supabase = createClient();
-  const router = useRouter();
-
-  async function loadLinks(userId: string) {
-    const { data } = await supabase
-      .from("short_links")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-    setUrls(data || []);
-  }
-
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return router.push("/auth");
-      setUser(user);
-      await loadLinks(user.id);
-      setLoading(false);
-    }
-    load();
-  }, []);
-
-  async function logout() {
-    await supabase.auth.signOut();
-    router.push("/auth");
-  }
-
-  if (loading) return <div className="p-8">Loading...</div>;
-
+export default function LandingPage() {
   return (
-    <div className="min-h-screen p-8 max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Your Links</h1>
-        <div className="flex gap-4 items-center">
-          <span className="text-sm text-gray-500">{user?.email}</span>
-          <button onClick={logout} className="text-sm border px-3 py-1 rounded">
-            Logout
-          </button>
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
+      {/* Nav */}
+      <nav className="border-b border-white/10 px-6 py-4 flex justify-between items-center">
+        <span className="font-semibold text-lg tracking-tight">shortify</span>
+        <div className="flex gap-3">
+          <Link
+            href="/auth"
+            className="text-sm text-white/60 hover:text-white transition-colors px-3 py-1.5"
+          >
+            Log in
+          </Link>
+          <Link
+            href="/auth"
+            className="text-sm bg-white text-black font-medium px-3 py-1.5 rounded-md hover:bg-white/90 transition-colors"
+          >
+            Get started
+          </Link>
         </div>
-      </div>
+      </nav>
 
-      <CreateLink
-        onCreated={() => loadLinks(user.id)}
-        userId={user.id}
-      />
+      {/* Hero */}
+      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+        <div className="inline-flex items-center gap-2 border border-white/10 rounded-full px-3 py-1 text-xs text-white/50 mb-8">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          Redis-cached redirects · QStash async analytics
+        </div>
 
-      <div className="mt-8 flex flex-col gap-4">
-        {urls.length === 0 && (
-          <p className="text-gray-500 text-center py-8">
-            No links yet. Create your first one!
-          </p>
-        )}
-        {urls.map((url) => (
-          <LinkCard
-            key={url.id}
-            url={url}
-            onDeleted={() =>
-              setUrls((prev) => prev.filter((u) => u.id !== url.id))
-            }
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
+        <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-tight max-w-2xl">
+          Short links.
+          <br />
+          <span className="text-white/40">Fast redirects.</span>
+        </h1>
 
-function CreateLink({
-  onCreated,
-  userId,
-}: {
-  onCreated: () => void;
-  userId: string;
-}) {
-  const [title, setTitle] = useState("");
-  const [originalUrl, setOriginalUrl] = useState("");
-  const [customCode, setCustomCode] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const supabase = createClient();
-
-  async function handleCreate() {
-    if (!title || !originalUrl) return;
-    setLoading(true);
-    setError("");
-
-    const code = customCode || Math.random().toString(36).substring(2, 8);
-
-    const { error } = await supabase.from("short_links").insert({
-      user_id: userId,
-      code,
-      original_url: originalUrl,
-      title,
-    });
-
-    if (error) {
-      setError(error.message.includes("duplicate") ? "That custom code is already taken." : error.message);
-    } else {
-      setTitle("");
-      setOriginalUrl("");
-      setCustomCode("");
-      onCreated();
-    }
-
-    setLoading(false);
-  }
-
-  return (
-    <div className="border rounded-lg p-6">
-      <h2 className="font-semibold mb-4">Create New Link</h2>
-      <div className="flex flex-col gap-3">
-        <input
-          placeholder="Title (e.g. My Portfolio)"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          placeholder="Long URL (e.g. https://google.com)"
-          value={originalUrl}
-          onChange={(e) => setOriginalUrl(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          placeholder="Custom code (optional, e.g. mylink)"
-          value={customCode}
-          onChange={(e) => setCustomCode(e.target.value)}
-          className="border p-2 rounded"
-        />
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <button
-          onClick={handleCreate}
-          disabled={loading}
-          className="bg-black text-white p-2 rounded disabled:opacity-50"
-        >
-          {loading ? "Creating..." : "Create Short Link"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function LinkCard({
-  url,
-  onDeleted,
-}: {
-  url: ShortLink;
-  onDeleted: () => void;
-}) {
-  const supabase = createClient();
-  const router = useRouter();
-  const shortUrl = `${window.location.origin}/${url.code}`;
-  const [deleting, setDeleting] = useState(false);
-
-  async function handleDelete() {
-    setDeleting(true);
-
-    // 1. Delete from Supabase
-    await supabase.from("short_links").delete().eq("id", url.id);
-
-    // 2. Invalidate Redis cache so stale redirects stop immediately
-    await fetch("/api/cache-invalidate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: url.code }),
-    }).catch(() => {}); // Cache invalidation failure is non-critical
-
-    onDeleted();
-    setDeleting(false);
-  }
-
-  return (
-    <div className="border rounded-lg p-4 flex justify-between items-start">
-      <div className="flex flex-col gap-1">
-        <p className="font-semibold">{url.title}</p>
-        <p className="text-blue-500 text-sm">{shortUrl}</p>
-        <p className="text-gray-400 text-xs truncate max-w-sm">
-          {url.original_url}
+        <p className="mt-6 text-white/50 text-lg max-w-md leading-relaxed">
+          Create short links that redirect in milliseconds. Track every click
+          with real-time analytics.
         </p>
-      </div>
-      <div className="flex gap-2">
-        <button
-          onClick={() => navigator.clipboard.writeText(shortUrl)}
-          className="text-xs border px-2 py-1 rounded"
-        >
-          Copy
-        </button>
-        <button
-          onClick={() => router.push(`/link/${url.id}`)}
-          className="text-xs border px-2 py-1 rounded"
-        >
-          Stats
-        </button>
-        <button
-          onClick={handleDelete}
-          disabled={deleting}
-          className="text-xs border border-red-300 text-red-500 px-2 py-1 rounded disabled:opacity-50"
-        >
-          {deleting ? "..." : "Delete"}
-        </button>
-      </div>
+
+        <div className="mt-10 flex gap-3">
+          <Link
+            href="/auth"
+            className="bg-white text-black font-medium px-5 py-2.5 rounded-md hover:bg-white/90 transition-colors text-sm"
+          >
+            Start shortening →
+          </Link>
+          <a
+            href="https://github.com/nag97/URL-SHORTENER"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border border-white/10 text-white/60 hover:text-white hover:border-white/20 transition-colors font-medium px-5 py-2.5 rounded-md text-sm"
+          >
+            View source
+          </a>
+        </div>
+
+        {/* Stats row */}
+        <div className="mt-20 grid grid-cols-3 gap-12 border-t border-white/10 pt-12">
+          {[
+            { value: "~3ms", label: "Redirect latency" },
+            { value: "24h", label: "Redis TTL cache" },
+            { value: "Async", label: "Click tracking" },
+          ].map((stat) => (
+            <div key={stat.label} className="flex flex-col items-center gap-1">
+              <span className="text-2xl font-semibold">{stat.value}</span>
+              <span className="text-sm text-white/40">{stat.label}</span>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-white/10 px-6 py-4 text-center text-xs text-white/30">
+        Built with Next.js · Supabase · Upstash Redis + QStash · Vercel
+      </footer>
     </div>
   );
 }
