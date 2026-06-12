@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
 
 interface ClickEvent {
   id: string
@@ -56,101 +57,128 @@ export default function LinkPage() {
     load()
   }, [])
 
-  if (loading) return <div className="p-8">Loading...</div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    )
+  }
+
   if (!link) return null
 
   const shortUrl = `${window.location.origin}/${link.code}`
 
-  // Count by country
   const byCountry = clicks.reduce((acc, c) => {
-    acc[c.country] = (acc[c.country] || 0) + 1
+    const key = c.city && c.city !== 'Unknown' ? `${c.city}, ${c.country}` : c.country
+    acc[key] = (acc[key] || 0) + 1
     return acc
   }, {} as Record<string, number>)
 
-  // Count by device
   const byDevice = clicks.reduce((acc, c) => {
     acc[c.device] = (acc[c.device] || 0) + 1
     return acc
   }, {} as Record<string, number>)
 
-  // Count by browser
   const byBrowser = clicks.reduce((acc, c) => {
     acc[c.browser] = (acc[c.browser] || 0) + 1
     return acc
   }, {} as Record<string, number>)
 
+  const uniqueLocations = new Set(clicks.map(c => c.country)).size
+
   return (
-    <div className="min-h-screen p-8 max-w-4xl mx-auto">
-      <button
-        onClick={() => router.push('/dashboard')}
-        className="text-sm text-gray-500 mb-6 flex items-center gap-1"
-      >
-        ← Back to Dashboard
-      </button>
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
+      {/* Nav */}
+      <nav className="border-b border-white/10 px-6 py-4 flex items-center gap-4">
+        <Link href="/" className="font-semibold text-lg tracking-tight">shortify</Link>
+        <span className="text-white/20">/</span>
+        <button
+          onClick={() => router.push('/dashboard')}
+          className="text-sm text-white/40 hover:text-white transition-colors"
+        >
+          Dashboard
+        </button>
+        <span className="text-white/20">/</span>
+        <span className="text-sm text-white/60">{link.title}</span>
+      </nav>
 
-      <div className="border rounded-lg p-6 mb-8">
-        <h1 className="text-2xl font-bold mb-2">{link.title}</h1>
-        <p className="text-blue-500 text-sm mb-1">{shortUrl}</p>
-        <p className="text-gray-400 text-xs">{link.original_url}</p>
-      </div>
+      <main className="max-w-3xl mx-auto px-6 py-10">
+        {/* Link info */}
+        <div className="border border-white/10 rounded-xl p-5 mb-8">
+          <h1 className="text-xl font-semibold mb-1">{link.title}</h1>
+          <p className="text-blue-400 text-sm font-mono mb-1">{shortUrl}</p>
+          <p className="text-white/30 text-xs truncate">{link.original_url}</p>
+        </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="border rounded-lg p-4 text-center">
-          <p className="text-3xl font-bold">{clicks.length}</p>
-          <p className="text-gray-500 text-sm">Total Clicks</p>
-        </div>
-        <div className="border rounded-lg p-4 text-center">
-          <p className="text-3xl font-bold">{Object.keys(byCountry).length}</p>
-          <p className="text-gray-500 text-sm">Countries</p>
-        </div>
-        <div className="border rounded-lg p-4 text-center">
-          <p className="text-3xl font-bold">{Object.keys(byDevice).length}</p>
-          <p className="text-gray-500 text-sm">Device Types</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-6 mb-8">
-        <div className="border rounded-lg p-4">
-          <h2 className="font-semibold mb-3">By Device</h2>
-          {Object.entries(byDevice).map(([device, count]) => (
-            <div key={device} className="flex justify-between py-1 text-sm">
-              <span className="capitalize">{device}</span>
-              <span className="font-medium">{count}</span>
+        {/* Stats grid */}
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          {[
+            { value: clicks.length, label: "Total Clicks" },
+            { value: uniqueLocations, label: "Countries" },
+            { value: Object.keys(byDevice).length, label: "Device Types" },
+          ].map((stat) => (
+            <div key={stat.label} className="border border-white/10 rounded-xl p-4 text-center">
+              <p className="text-3xl font-bold">{stat.value}</p>
+              <p className="text-white/40 text-sm mt-1">{stat.label}</p>
             </div>
           ))}
         </div>
-        <div className="border rounded-lg p-4">
-          <h2 className="font-semibold mb-3">By Browser</h2>
-          {Object.entries(byBrowser).map(([browser, count]) => (
-            <div key={browser} className="flex justify-between py-1 text-sm">
-              <span>{browser}</span>
-              <span className="font-medium">{count}</span>
+
+        {/* Device + Browser */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="border border-white/10 rounded-xl p-4">
+            <h2 className="text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">Device</h2>
+            {Object.entries(byDevice).map(([device, count]) => (
+              <div key={device} className="flex justify-between py-1.5 text-sm border-b border-white/5 last:border-0">
+                <span className="capitalize text-white/80">{device}</span>
+                <span className="font-medium">{count}</span>
+              </div>
+            ))}
+          </div>
+          <div className="border border-white/10 rounded-xl p-4">
+            <h2 className="text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">Browser</h2>
+            {Object.entries(byBrowser).map(([browser, count]) => (
+              <div key={browser} className="flex justify-between py-1.5 text-sm border-b border-white/5 last:border-0">
+                <span className="text-white/80">{browser}</span>
+                <span className="font-medium">{count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Location — now shows city */}
+        <div className="border border-white/10 rounded-xl p-4 mb-3">
+          <h2 className="text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">Location</h2>
+          {Object.entries(byCountry)
+            .sort((a, b) => b[1] - a[1])
+            .map(([location, count]) => (
+              <div key={location} className="flex justify-between py-1.5 text-sm border-b border-white/5 last:border-0">
+                <span className="text-white/80">{location}</span>
+                <span className="font-medium">{count}</span>
+              </div>
+            ))}
+        </div>
+
+        {/* Recent clicks */}
+        <div className="border border-white/10 rounded-xl p-4">
+          <h2 className="text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">Recent Clicks</h2>
+          {clicks.slice(0, 10).map(click => (
+            <div key={click.id} className="flex justify-between py-2 text-sm border-b border-white/5 last:border-0">
+              <span className="text-white/60">
+                {click.city && click.city !== 'Unknown' ? `${click.city}, ` : ''}{click.country}
+                <span className="text-white/30 mx-1">·</span>
+                {click.device}
+                <span className="text-white/30 mx-1">·</span>
+                {click.browser}
+              </span>
+              <span className="text-white/30 text-xs">
+                {new Date(click.clicked_at).toLocaleString()}
+              </span>
             </div>
           ))}
         </div>
-      </div>
-
-      <div className="border rounded-lg p-4">
-        <h2 className="font-semibold mb-3">By Country</h2>
-        {Object.entries(byCountry).map(([country, count]) => (
-          <div key={country} className="flex justify-between py-1 text-sm">
-            <span>{country}</span>
-            <span className="font-medium">{count}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="border rounded-lg p-4 mt-6">
-        <h2 className="font-semibold mb-3">Recent Clicks</h2>
-        {clicks.slice(0, 10).map(click => (
-          <div key={click.id} className="flex justify-between py-2 text-sm border-b last:border-0">
-            <span>{click.country} · {click.device} · {click.browser}</span>
-            <span className="text-gray-400">
-              {new Date(click.clicked_at).toLocaleString()}
-            </span>
-          </div>
-        ))}
-      </div>
+      </main>
     </div>
   )
 }
