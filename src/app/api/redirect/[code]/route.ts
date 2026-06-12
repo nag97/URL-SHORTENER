@@ -3,15 +3,6 @@ import { getCachedLink, setCachedLink } from '@/lib/redis'
 import { createClient } from '@/lib/supabase/server'
 import { publishClickEvent } from '@/lib/qstash'
 
-/**
- * GET /api/redirect/[code]
- *
- * Cache-first redirect with async click tracking via QStash:
- * 1. Check Redis cache → hit: redirect immediately (~3ms)
- * 2. Miss: query Supabase, populate cache, redirect
- * 3. Publish click event to QStash (fire-and-forget, non-blocking)
- *    QStash delivers to /api/track asynchronously
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ code: string }> }
@@ -29,8 +20,8 @@ export async function GET(
   // 1. Cache hit
   const cached = await getCachedLink(code)
   if (cached) {
-    // Publish to QStash async — doesn't block redirect
-    publishClickEvent(origin, { link_id: cached.id, ...clickMeta }).catch(() => {})
+    // Await publish — Vercel kills the function before fire-and-forget completes
+    await publishClickEvent(origin, { link_id: cached.id, ...clickMeta })
     return NextResponse.redirect(cached.original_url, { status: 307 })
   }
 
@@ -46,9 +37,8 @@ export async function GET(
     return NextResponse.redirect(new URL('/', request.url), { status: 307 })
   }
 
-  // Populate cache + publish event (both non-blocking)
-  setCachedLink(code, { id: link.id, original_url: link.original_url }).catch(() => {})
-  publishClickEvent(origin, { link_id: link.id, ...clickMeta }).catch(() => {})
+  await setCachedLink(code, { id: link.id, original_url: link.original_url })
+  await publishClickEvent(origin, { link_id: link.id, ...clickMeta })
 
   return NextResponse.redirect(link.original_url, { status: 307 })
 }
