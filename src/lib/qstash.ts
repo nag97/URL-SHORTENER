@@ -1,11 +1,3 @@
-/**
- * QStash publisher - sends click events as async messages.
- *
- * Instead of calling /api/track directly (synchronous, adds latency),
- * we publish to QStash which delivers to /api/track asynchronously.
- * The redirect completes immediately, click tracking happens in the background.
- */
-
 const QSTASH_URL = process.env.QSTASH_URL!
 const QSTASH_TOKEN = process.env.QSTASH_TOKEN!
 
@@ -17,34 +9,37 @@ export type ClickEvent = {
   referrer: string
 }
 
-/**
- * Publish a click event to QStash.
- * QStash will call /api/track with the event payload.
- * Fire-and-forget safe — never throws, swallows errors.
- */
 export async function publishClickEvent(
   origin: string,
   event: ClickEvent
 ): Promise<void> {
+  console.log('[qstash] QSTASH_URL defined=', !!QSTASH_URL)
+  console.log('[qstash] QSTASH_TOKEN defined=', !!QSTASH_TOKEN)
+
   if (!QSTASH_URL || !QSTASH_TOKEN) {
     console.error('[qstash] env vars missing')
     return
   }
 
-  try {
-    const targetUrl = `${origin}/api/track`
+  const targetUrl = `${origin}/api/track`
+  const publishUrl = `${QSTASH_URL}/v2/publish/${targetUrl}`
+  console.log('[qstash] publishing to:', publishUrl)
 
-    await fetch(`${QSTASH_URL}/v2/publish/${targetUrl}`, {
+  try {
+    const res = await fetch(publishUrl, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${QSTASH_TOKEN}`,
         'Content-Type': 'application/json',
-        // Retry up to 3 times if /api/track fails
         'Upstash-Retries': '3',
       },
       body: JSON.stringify(event),
     })
+
+    const text = await res.text()
+    console.log('[qstash] response status:', res.status)
+    console.log('[qstash] response body:', text)
   } catch (err) {
-    console.error('[qstash] publish failed:', err)
+    console.error('[qstash] fetch failed:', err)
   }
 }
