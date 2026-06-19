@@ -4,6 +4,7 @@ const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN!
 type CachedLink = {
   id: string
   original_url: string
+  expires_at?: string | null
 }
 
 async function redisPost(body: unknown[]): Promise<unknown> {
@@ -46,7 +47,6 @@ export async function getCachedLink(code: string): Promise<CachedLink | null> {
 
 /** Cache a link for 24 hours. */
 export async function setCachedLink(code: string, link: CachedLink): Promise<void> {
-  // Correct Upstash REST format: POST with array body ['SET', key, value, 'EX', ttl]
   await redisPost(['SET', `short:${code}`, JSON.stringify(link), 'EX', 86400])
 }
 

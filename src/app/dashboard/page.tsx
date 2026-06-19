@@ -11,6 +11,7 @@ interface ShortLink {
   original_url: string;
   title: string;
   created_at: string;
+  expires_at: string | null;
 }
 
 export default function Dashboard() {
@@ -48,7 +49,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
       </div>
     );
   }
@@ -57,7 +58,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       {/* Nav */}
       <nav className="border-b border-white/10 px-6 py-4 flex justify-between items-center">
-        <Link href="/" className="font-semibold text-lg tracking-tight">shortify</Link>
+        <Link href="/" className="font-semibold text-lg tracking-tight text-emerald-400">shortify</Link>
         <div className="flex items-center gap-4">
           <span className="text-sm text-white/40 hidden sm:block">{user?.email}</span>
           <button
@@ -75,7 +76,7 @@ export default function Dashboard() {
           <p className="text-white/40 text-sm mt-1">{urls.length} link{urls.length !== 1 ? "s" : ""} total</p>
         </div>
 
-        <CreateLink onCreated={() => loadLinks(user.id)} userId={user.id} />
+        <CreateLink onCreated={() => loadLinks(user.id)} />
 
         <div className="mt-8 flex flex-col gap-3">
           {urls.length === 0 ? (
@@ -97,35 +98,40 @@ export default function Dashboard() {
   );
 }
 
-function CreateLink({ onCreated, userId }: { onCreated: () => void; userId: string }) {
+function CreateLink({ onCreated }: { onCreated: () => void }) {
   const [title, setTitle] = useState("");
   const [originalUrl, setOriginalUrl] = useState("");
   const [customCode, setCustomCode] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [open, setOpen] = useState(true);
-  const supabase = createClient();
 
   async function handleCreate() {
     if (!title || !originalUrl) return;
     setLoading(true);
     setError("");
 
-    const code = customCode || Math.random().toString(36).substring(2, 8);
-
-    const { error } = await supabase.from("short_links").insert({
-      user_id: userId,
-      code,
-      original_url: originalUrl,
-      title,
+    const res = await fetch("/api/links/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        original_url: originalUrl,
+        code: customCode || undefined,
+        expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
+      }),
     });
 
-    if (error) {
-      setError(error.message.includes("duplicate") ? "That custom code is already taken." : error.message);
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.error || "Something went wrong");
     } else {
       setTitle("");
       setOriginalUrl("");
       setCustomCode("");
+      setExpiresAt("");
       onCreated();
     }
 
@@ -149,26 +155,35 @@ function CreateLink({ onCreated, userId }: { onCreated: () => void; userId: stri
               placeholder="Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors"
+              className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder:text-white/20 focus:outline-none focus:border-emerald-500/40 transition-colors"
             />
             <input
               placeholder="Custom code (optional)"
               value={customCode}
               onChange={(e) => setCustomCode(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors"
+              className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder:text-white/20 focus:outline-none focus:border-emerald-500/40 transition-colors"
             />
           </div>
           <input
             placeholder="https://your-long-url.com"
             value={originalUrl}
             onChange={(e) => setOriginalUrl(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors"
+            className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder:text-white/20 focus:outline-none focus:border-emerald-500/40 transition-colors"
           />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-white/40">Expires (optional)</label>
+            <input
+              type="datetime-local"
+              value={expiresAt}
+              onChange={(e) => setExpiresAt(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white/70 focus:outline-none focus:border-emerald-500/40 transition-colors [color-scheme:dark]"
+            />
+          </div>
           {error && <p className="text-red-400 text-xs">{error}</p>}
           <button
             onClick={handleCreate}
             disabled={loading || !title || !originalUrl}
-            className="bg-white text-black font-medium py-2 rounded-md text-sm hover:bg-white/90 transition-colors disabled:opacity-40 self-start px-5"
+            className="bg-emerald-500 text-black font-medium py-2 rounded-md text-sm hover:bg-emerald-400 transition-colors disabled:opacity-40 self-start px-5"
           >
             {loading ? "Creating..." : "Create link"}
           </button>
@@ -184,6 +199,8 @@ function LinkCard({ url, onDeleted }: { url: ShortLink; onDeleted: () => void })
   const shortUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/${url.code}`;
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const isExpired = url.expires_at && new Date(url.expires_at) < new Date();
 
   async function handleDelete() {
     setDeleting(true);
@@ -204,11 +221,23 @@ function LinkCard({ url, onDeleted }: { url: ShortLink; onDeleted: () => void })
   }
 
   return (
-    <div className="border border-white/10 rounded-xl px-5 py-4 flex justify-between items-center gap-4 hover:border-white/20 transition-colors group">
+    <div className={`border rounded-xl px-5 py-4 flex justify-between items-center gap-4 transition-colors group ${isExpired ? "border-red-500/20 opacity-60" : "border-white/10 hover:border-emerald-500/30"}`}>
       <div className="flex flex-col gap-0.5 min-w-0">
-        <p className="font-medium text-sm">{url.title}</p>
-        <p className="text-blue-400 text-xs font-mono">/{url.code}</p>
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-sm">{url.title}</p>
+          {isExpired && (
+            <span className="text-[10px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded-full border border-red-500/20">
+              Expired
+            </span>
+          )}
+        </div>
+        <p className="text-emerald-400 text-xs font-mono">/{url.code}</p>
         <p className="text-white/30 text-xs truncate max-w-xs">{url.original_url}</p>
+        {url.expires_at && !isExpired && (
+          <p className="text-white/20 text-[10px] mt-0.5">
+            Expires {new Date(url.expires_at).toLocaleString()}
+          </p>
+        )}
       </div>
       <div className="flex gap-2 shrink-0">
         <button
