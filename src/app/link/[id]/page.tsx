@@ -23,11 +23,17 @@ interface ShortLink {
   created_at: string
 }
 
-function StatCard({ value, label }: { value: number; label: string }) {
+function cleanDevice(device: string): string {
+  if (!device || device === 'desktop') return 'Desktop'
+  if (device.length <= 2 || /^[A-Z0-9\-]+$/.test(device)) return 'Android'
+  return device.charAt(0).toUpperCase() + device.slice(1)
+}
+
+function StatBlock({ value, label }: { value: number; label: string }) {
   return (
-    <div className="border border-white/10 rounded-xl p-5 text-center hover:border-white/20 transition-colors">
-      <p className="text-4xl font-bold tracking-tight">{value}</p>
-      <p className="text-white/40 text-sm mt-1">{label}</p>
+    <div className="text-center">
+      <p className="text-[56px] font-semibold tracking-tight leading-none">{value}</p>
+      <p className="text-[#86868b] text-[14px] mt-1">{label}</p>
     </div>
   )
 }
@@ -35,20 +41,20 @@ function StatCard({ value, label }: { value: number; label: string }) {
 function BreakdownCard({ title, data }: { title: string; data: Record<string, number> }) {
   const total = Object.values(data).reduce((a, b) => a + b, 0)
   return (
-    <div className="border border-white/10 rounded-xl p-4">
-      <h2 className="text-xs font-medium text-white/40 uppercase tracking-widest mb-4">{title}</h2>
-      <div className="flex flex-col gap-2">
+    <div className="bg-[#f5f5f7] rounded-2xl p-6">
+      <h2 className="text-[13px] font-medium text-[#86868b] uppercase tracking-wider mb-4">{title}</h2>
+      <div className="flex flex-col gap-3">
         {Object.entries(data)
           .sort((a, b) => b[1] - a[1])
           .map(([label, count]) => (
             <div key={label}>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-white/80 capitalize">{label}</span>
-                <span className="text-white/40">{count}</span>
+              <div className="flex justify-between text-[15px] mb-1.5">
+                <span className="text-[#1d1d1f] capitalize">{label}</span>
+                <span className="text-[#86868b]">{count}</span>
               </div>
-              <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-[3px] bg-[#e8e8ed] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-white/30 rounded-full"
+                  className="h-full bg-[#0071e3] rounded-full transition-all"
                   style={{ width: `${(count / total) * 100}%` }}
                 />
               </div>
@@ -67,11 +73,13 @@ export default function LinkPage() {
   const [clicks, setClicks] = useState<ClickEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return router.push('/auth')
+      setUser(user)
 
       const { data: linkData } = await supabase
         .from('short_links')
@@ -96,8 +104,8 @@ export default function LinkPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-[#e8e8ed] border-t-[#0071e3] rounded-full animate-spin" />
       </div>
     )
   }
@@ -106,22 +114,32 @@ export default function LinkPage() {
 
   const shortUrl = `${window.location.origin}/${link.code}`
 
-  // Location: show "City, Country" when city is available
   const byLocation = clicks.reduce((acc, c) => {
-    const key = c.city && c.city !== 'Unknown' && c.city !== ''
-      ? `${c.city}, ${c.country}`
-      : c.country || 'Unknown'
+    const city = c.city && c.city !== 'Unknown' && c.city !== '' ? c.city : null
+    const key = city ? `${city}, ${c.country}` : c.country || 'Unknown'
     acc[key] = (acc[key] || 0) + 1
     return acc
   }, {} as Record<string, number>)
 
+  const consolidatedLocation: Record<string, number> = {}
+  for (const [key, count] of Object.entries(byLocation)) {
+    const hasCityEntry = Object.keys(byLocation).some(k => k !== key && k.endsWith(`, ${key}`))
+    if (hasCityEntry) {
+      const cityKey = Object.keys(byLocation).find(k => k !== key && k.endsWith(`, ${key}`))!
+      consolidatedLocation[cityKey] = (consolidatedLocation[cityKey] || byLocation[cityKey]) + count
+    } else {
+      consolidatedLocation[key] = (consolidatedLocation[key] || 0) + count
+    }
+  }
+
   const byDevice = clicks.reduce((acc, c) => {
-    acc[c.device || 'desktop'] = (acc[c.device || 'desktop'] || 0) + 1
+    const d = cleanDevice(c.device)
+    acc[d] = (acc[d] || 0) + 1
     return acc
   }, {} as Record<string, number>)
 
   const byBrowser = clicks.reduce((acc, c) => {
-    acc[c.browser || 'unknown'] = (acc[c.browser || 'unknown'] || 0) + 1
+    acc[c.browser || 'Unknown'] = (acc[c.browser || 'Unknown'] || 0) + 1
     return acc
   }, {} as Record<string, number>)
 
@@ -133,71 +151,84 @@ export default function LinkPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  async function logout() {
+    await supabase.auth.signOut()
+    router.push('/auth')
+  }
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
-      {/* Nav */}
-      <nav className="border-b border-white/10 px-6 py-4 flex items-center gap-3">
-        <Link href="/" className="font-semibold text-lg tracking-tight">shortify</Link>
-        <span className="text-white/20">/</span>
-        <button onClick={() => router.push('/dashboard')} className="text-sm text-white/40 hover:text-white transition-colors">
-          Dashboard
-        </button>
-        <span className="text-white/20">/</span>
-        <span className="text-sm text-white/60 truncate max-w-xs">{link.title}</span>
+    <div className="min-h-screen bg-white">
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-[#e8e8ed]">
+        <div className="max-w-[980px] mx-auto px-6 h-12 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-[14px]">
+            <Link href="/" className="font-semibold text-[17px] tracking-tight mr-2">Shortify</Link>
+            <button onClick={() => router.push('/dashboard')} className="text-[#86868b] hover:text-[#1d1d1f] transition-colors">
+              Dashboard
+            </button>
+            <span className="text-[#d2d2d7]">›</span>
+            <span className="text-[#1d1d1f] truncate max-w-[160px]">{link.title}</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-[12px] text-[#86868b] hidden sm:block">{user?.email}</span>
+            <button onClick={logout} className="text-[12px] text-[#0071e3] hover:underline">
+              Sign out
+            </button>
+          </div>
+        </div>
       </nav>
 
-      <main className="max-w-3xl mx-auto px-6 py-10">
-        {/* Link card */}
-        <div className="border border-white/10 rounded-xl p-5 mb-8 flex justify-between items-start gap-4">
+      <main className="max-w-[980px] mx-auto px-6 py-16">
+        {/* Link header */}
+        <div className="flex justify-between items-start gap-4 mb-12">
           <div className="min-w-0">
-            <h1 className="text-xl font-semibold mb-1">{link.title}</h1>
-            <p className="text-blue-400 text-sm font-mono mb-1">{shortUrl}</p>
-            <p className="text-white/30 text-xs truncate max-w-sm">{link.original_url}</p>
+            <h1 className="text-[40px] font-semibold tracking-tight mb-1">{link.title}</h1>
+            <p className="text-[#0071e3] text-[17px]">{shortUrl.replace(/^https?:\/\//, '')}</p>
+            <p className="text-[#86868b] text-[14px] mt-1 truncate max-w-md">{link.original_url}</p>
           </div>
           <button
             onClick={handleCopy}
-            className="shrink-0 text-xs border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-colors px-3 py-1.5 rounded-md"
+            className="shrink-0 text-[13px] bg-[#f5f5f7] hover:bg-[#e8e8ed] transition-colors px-4 py-2 rounded-full font-medium"
           >
-            {copied ? "Copied!" : "Copy link"}
+            {copied ? "Copied" : "Copy link"}
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <StatCard value={clicks.length} label="Total Clicks" />
-          <StatCard value={uniqueCountries} label="Countries" />
-          <StatCard value={Object.keys(byDevice).length} label="Device Types" />
+        {/* Big stats row */}
+        <div className="grid grid-cols-3 gap-4 mb-12 py-10 bg-[#f5f5f7] rounded-2xl">
+          <StatBlock value={clicks.length} label="Total clicks" />
+          <StatBlock value={uniqueCountries} label="Countries" />
+          <StatBlock value={Object.keys(byDevice).length} label="Device types" />
         </div>
 
         {/* Breakdowns */}
-        <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <BreakdownCard title="Device" data={byDevice} />
           <BreakdownCard title="Browser" data={byBrowser} />
         </div>
-        <div className="mb-3">
-          <BreakdownCard title="Location" data={byLocation} />
+        <div className="mb-4">
+          <BreakdownCard title="Location" data={consolidatedLocation} />
         </div>
 
         {/* Recent clicks */}
-        <div className="border border-white/10 rounded-xl p-4">
-          <h2 className="text-xs font-medium text-white/40 uppercase tracking-widest mb-4">Recent Clicks</h2>
+        <div className="bg-[#f5f5f7] rounded-2xl p-6">
+          <h2 className="text-[13px] font-medium text-[#86868b] uppercase tracking-wider mb-4">Recent clicks</h2>
           {clicks.length === 0 && (
-            <p className="text-white/20 text-sm text-center py-4">No clicks yet</p>
+            <p className="text-[#86868b] text-[15px] text-center py-6">No clicks yet</p>
           )}
           {clicks.slice(0, 15).map(click => (
-            <div key={click.id} className="flex justify-between items-center py-2.5 border-b border-white/5 last:border-0">
+            <div key={click.id} className="flex justify-between items-center py-3 border-b border-[#e8e8ed] last:border-0">
               <div className="flex flex-col gap-0.5">
-                <span className="text-sm text-white/80">
+                <span className="text-[15px] text-[#1d1d1f]">
                   {click.city && click.city !== 'Unknown' && click.city !== ''
                     ? `${click.city}, ${click.country}`
                     : click.country || 'Unknown'}
                 </span>
-                <span className="text-xs text-white/30 capitalize">
-                  {click.device || 'desktop'} · {click.browser || 'unknown'}
-                  {click.referrer ? ` · from ${new URL(click.referrer).hostname}` : ''}
+                <span className="text-[13px] text-[#86868b] capitalize">
+                  {cleanDevice(click.device)} · {click.browser || 'Unknown'}
+                  {click.referrer ? ` · ${(() => { try { return new URL(click.referrer).hostname } catch { return click.referrer } })()}` : ''}
                 </span>
               </div>
-              <span className="text-xs text-white/20 shrink-0 ml-4">
+              <span className="text-[13px] text-[#86868b] shrink-0 ml-4">
                 {new Date(click.clicked_at).toLocaleString()}
               </span>
             </div>

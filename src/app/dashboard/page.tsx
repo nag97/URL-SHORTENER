@@ -48,40 +48,41 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-[#e8e8ed] border-t-[#0071e3] rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
-      {/* Nav */}
-      <nav className="border-b border-white/10 px-6 py-4 flex justify-between items-center">
-        <Link href="/" className="font-semibold text-lg tracking-tight text-emerald-400">shortify</Link>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-white/40 hidden sm:block">{user?.email}</span>
-          <button
-            onClick={logout}
-            className="text-sm border border-white/10 text-white/60 hover:text-white hover:border-white/20 transition-colors px-3 py-1.5 rounded-md"
-          >
-            Sign out
-          </button>
+    <div className="min-h-screen bg-white">
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-[#e8e8ed]">
+        <div className="max-w-[980px] mx-auto px-6 h-12 flex justify-between items-center">
+          <Link href="/" className="font-semibold text-[17px] tracking-tight">Shortify</Link>
+          <div className="flex items-center gap-5">
+            <span className="text-[12px] text-[#86868b] hidden sm:block">{user?.email}</span>
+            <button
+              onClick={logout}
+              className="text-[12px] text-[#0071e3] hover:underline"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </nav>
 
-      <main className="max-w-3xl mx-auto px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold">Your links</h1>
-          <p className="text-white/40 text-sm mt-1">{urls.length} link{urls.length !== 1 ? "s" : ""} total</p>
+      <main className="max-w-[980px] mx-auto px-6 py-16">
+        <div className="mb-10">
+          <h1 className="text-[40px] font-semibold tracking-tight">Your links</h1>
+          <p className="text-[#86868b] text-[17px] mt-1">{urls.length} link{urls.length !== 1 ? "s" : ""}</p>
         </div>
 
         <CreateLink onCreated={() => loadLinks(user.id)} />
 
-        <div className="mt-8 flex flex-col gap-3">
+        <div className="mt-10 flex flex-col gap-3">
           {urls.length === 0 ? (
-            <div className="text-center py-16 border border-white/10 rounded-xl border-dashed">
-              <p className="text-white/30 text-sm">No links yet. Create your first one above.</p>
+            <div className="text-center py-20 bg-[#f5f5f7] rounded-2xl">
+              <p className="text-[#86868b] text-[17px]">No links yet. Create your first one above.</p>
             </div>
           ) : (
             urls.map((url) => (
@@ -105,7 +106,6 @@ function CreateLink({ onCreated }: { onCreated: () => void }) {
   const [expiresAt, setExpiresAt] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [open, setOpen] = useState(true);
 
   async function handleCreate() {
     if (!title || !originalUrl) return;
@@ -139,56 +139,47 @@ function CreateLink({ onCreated }: { onCreated: () => void }) {
   }
 
   return (
-    <div className="border border-white/10 rounded-xl overflow-hidden">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex justify-between items-center px-5 py-4 text-left hover:bg-white/[0.02] transition-colors"
-      >
-        <span className="font-medium text-sm">New link</span>
-        <span className="text-white/30 text-lg leading-none">{open ? "−" : "+"}</span>
-      </button>
-
-      {open && (
-        <div className="px-5 pb-5 flex flex-col gap-3 border-t border-white/10 pt-4">
-          <div className="grid sm:grid-cols-2 gap-3">
-            <input
-              placeholder="Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder:text-white/20 focus:outline-none focus:border-emerald-500/40 transition-colors"
-            />
-            <input
-              placeholder="Custom code (optional)"
-              value={customCode}
-              onChange={(e) => setCustomCode(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder:text-white/20 focus:outline-none focus:border-emerald-500/40 transition-colors"
-            />
-          </div>
+    <div className="bg-[#f5f5f7] rounded-2xl p-7">
+      <h2 className="text-[20px] font-semibold mb-5">Create a new link</h2>
+      <div className="flex flex-col gap-3">
+        <div className="grid sm:grid-cols-2 gap-3">
           <input
-            placeholder="https://your-long-url.com"
-            value={originalUrl}
-            onChange={(e) => setOriginalUrl(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder:text-white/20 focus:outline-none focus:border-emerald-500/40 transition-colors"
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="bg-white border border-transparent rounded-xl px-4 py-3 text-[15px] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] transition-colors"
           />
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-white/40">Expires (optional)</label>
-            <input
-              type="datetime-local"
-              value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white/70 focus:outline-none focus:border-emerald-500/40 transition-colors [color-scheme:dark]"
-            />
-          </div>
-          {error && <p className="text-red-400 text-xs">{error}</p>}
-          <button
-            onClick={handleCreate}
-            disabled={loading || !title || !originalUrl}
-            className="bg-emerald-500 text-black font-medium py-2 rounded-md text-sm hover:bg-emerald-400 transition-colors disabled:opacity-40 self-start px-5"
-          >
-            {loading ? "Creating..." : "Create link"}
-          </button>
+          <input
+            placeholder="Custom code (optional)"
+            value={customCode}
+            onChange={(e) => setCustomCode(e.target.value)}
+            className="bg-white border border-transparent rounded-xl px-4 py-3 text-[15px] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] transition-colors"
+          />
         </div>
-      )}
+        <input
+          placeholder="https://your-long-url.com"
+          value={originalUrl}
+          onChange={(e) => setOriginalUrl(e.target.value)}
+          className="bg-white border border-transparent rounded-xl px-4 py-3 text-[15px] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] transition-colors"
+        />
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[13px] text-[#86868b]">Expires (optional)</label>
+          <input
+            type="datetime-local"
+            value={expiresAt}
+            onChange={(e) => setExpiresAt(e.target.value)}
+            className="bg-white border border-transparent rounded-xl px-4 py-3 text-[15px] text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] transition-colors"
+          />
+        </div>
+        {error && <p className="text-[#d70015] text-[13px]">{error}</p>}
+        <button
+          onClick={handleCreate}
+          disabled={loading || !title || !originalUrl}
+          className="bg-[#0071e3] text-white font-medium py-3 rounded-xl text-[15px] hover:bg-[#0077ed] transition-colors disabled:opacity-40 self-start px-6 mt-1"
+        >
+          {loading ? "Creating…" : "Create link"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -221,43 +212,38 @@ function LinkCard({ url, onDeleted }: { url: ShortLink; onDeleted: () => void })
   }
 
   return (
-    <div className={`border rounded-xl px-5 py-4 flex justify-between items-center gap-4 transition-colors group ${isExpired ? "border-red-500/20 opacity-60" : "border-white/10 hover:border-emerald-500/30"}`}>
+    <div className={`rounded-2xl px-6 py-5 flex justify-between items-center gap-4 transition-colors border ${isExpired ? "border-[#f5d4d4] bg-[#fff5f5]" : "border-[#e8e8ed] hover:border-[#0071e3]/30"}`}>
       <div className="flex flex-col gap-0.5 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="font-medium text-sm">{url.title}</p>
+          <p className="font-medium text-[17px]">{url.title}</p>
           {isExpired && (
-            <span className="text-[10px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded-full border border-red-500/20">
+            <span className="text-[11px] bg-[#fde8e8] text-[#d70015] px-2 py-0.5 rounded-full font-medium">
               Expired
             </span>
           )}
         </div>
-        <p className="text-emerald-400 text-xs font-mono">/{url.code}</p>
-        <p className="text-white/30 text-xs truncate max-w-xs">{url.original_url}</p>
-        {url.expires_at && !isExpired && (
-          <p className="text-white/20 text-[10px] mt-0.5">
-            Expires {new Date(url.expires_at).toLocaleString()}
-          </p>
-        )}
+        <p className="text-[#0071e3] text-[14px]">{shortUrl.replace(/^https?:\/\//, '')}</p>
+        <p className="text-[#86868b] text-[13px] truncate max-w-xs">{url.original_url}</p>
       </div>
       <div className="flex gap-2 shrink-0">
         <button
           onClick={handleCopy}
-          className="text-xs border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-colors px-2.5 py-1.5 rounded-md"
+          className="text-[13px] text-[#1d1d1f] bg-[#f5f5f7] hover:bg-[#e8e8ed] transition-colors px-3.5 py-2 rounded-full font-medium"
         >
-          {copied ? "Copied!" : "Copy"}
+          {copied ? "Copied" : "Copy"}
         </button>
         <button
           onClick={() => router.push(`/link/${url.id}`)}
-          className="text-xs border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-colors px-2.5 py-1.5 rounded-md"
+          className="text-[13px] text-[#1d1d1f] bg-[#f5f5f7] hover:bg-[#e8e8ed] transition-colors px-3.5 py-2 rounded-full font-medium"
         >
           Stats
         </button>
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="text-xs border border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-500/40 transition-colors px-2.5 py-1.5 rounded-md disabled:opacity-40"
+          className="text-[13px] text-[#d70015] bg-[#fde8e8] hover:bg-[#fad6d6] transition-colors px-3.5 py-2 rounded-full font-medium disabled:opacity-40"
         >
-          {deleting ? "..." : "Delete"}
+          {deleting ? "…" : "Delete"}
         </button>
       </div>
     </div>

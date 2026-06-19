@@ -1,20 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Shortify — Fast URL Shortener",
-  description: "Shorten URLs, track clicks, analyze traffic. Built with Redis caching and async event processing.",
+  title: "Shortify",
+  description: "Short links. Beautifully simple.",
 };
 
 export default function RootLayout({
@@ -23,11 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-[#0a0a0a] text-white">
+    <html lang="en" className="h-full">
+      <body className="min-h-full bg-white text-[#1d1d1f] antialiased" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif' }}>
         {children}
       </body>
     </html>

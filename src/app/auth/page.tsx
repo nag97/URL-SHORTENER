@@ -31,67 +31,56 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
-      {/* Nav */}
-      <nav className="border-b border-white/10 px-6 py-4">
-        <Link href="/" className="font-semibold text-lg tracking-tight">
-          shortify
-        </Link>
+    <div className="min-h-screen bg-white flex flex-col">
+      <nav className="px-6 h-12 flex items-center border-b border-[#e8e8ed]">
+        <Link href="/" className="font-semibold text-[17px] tracking-tight">Shortify</Link>
       </nav>
 
-      <div className="flex-1 flex items-center justify-center px-6">
-        <div className="w-full max-w-sm">
-          <h1 className="text-2xl font-semibold mb-1">
-            {isLogin ? "Welcome back" : "Create an account"}
+      <div className="flex-1 flex items-center justify-center px-6 py-16">
+        <div className="w-full max-w-[380px]">
+          <h1 className="text-[32px] font-semibold tracking-tight text-center mb-1">
+            {isLogin ? "Sign in" : "Create your account"}
           </h1>
-          <p className="text-white/40 text-sm mb-8">
-            {isLogin ? "Sign in to your account" : "Start shortening links for free"}
+          <p className="text-[#86868b] text-[15px] text-center mb-10">
+            {isLogin ? "Welcome back to Shortify" : "Start shortening links in seconds"}
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-white/50 uppercase tracking-wider">Email</label>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-md px-3 py-2.5 text-sm placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors"
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-white/50 uppercase tracking-wider">Password</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-md px-3 py-2.5 text-sm placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors"
-                required
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="bg-[#f5f5f7] border border-transparent rounded-xl px-4 py-3 text-[15px] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:bg-white transition-colors"
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="bg-[#f5f5f7] border border-transparent rounded-xl px-4 py-3 text-[15px] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:bg-white transition-colors"
+              required
+            />
 
             {error && (
-              <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-md px-3 py-2">
-                {error}
-              </p>
+              <p className="text-[#d70015] text-[13px] text-center">{error}</p>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="bg-white text-black font-medium py-2.5 rounded-md text-sm hover:bg-white/90 transition-colors disabled:opacity-50 mt-1"
+              className="bg-[#0071e3] text-white font-medium py-3 rounded-xl text-[15px] hover:bg-[#0077ed] transition-colors disabled:opacity-50 mt-1"
             >
-              {loading ? "Please wait..." : isLogin ? "Sign in" : "Create account"}
+              {loading ? "Please wait…" : isLogin ? "Sign in" : "Create account"}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-white/40">
+          <p className="mt-8 text-center text-[13px] text-[#86868b]">
             {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
             <button
               onClick={() => { setIsLogin(!isLogin); setError("") }}
-              className="text-white hover:text-white/80 transition-colors"
+              className="text-[#0071e3] hover:underline"
             >
               {isLogin ? "Sign up" : "Sign in"}
             </button>
