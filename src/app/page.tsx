@@ -6,7 +6,7 @@ import { Logo } from "@/components/Logo";
 function NavItem({ label }: { label: string }) {
   return (
     <div className="relative group">
-      <span className="text-[#00b32d] hover:text-[#00ff41] transition-colors cursor-default">
+      <span className="text-[#00d94a] hover:text-[#00ff41] transition-colors cursor-default">
         {label}
       </span>
       <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
@@ -28,7 +28,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-7 text-[13px]">
             <NavItem label="about" />
             <NavItem label="pricing" />
-            <Link href="/auth" className="text-[#00b32d] hover:text-[#00ff41] transition-colors">
+            <Link href="/auth" className="text-[#00d94a] hover:text-[#00ff41] transition-colors">
               sign_in
             </Link>
             <Link
