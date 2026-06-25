@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useParams, useRouter } from "next/navigation"
-import Link from "next/link"
+import { Logo } from "@/components/Logo"
 
 interface ClickEvent {
   id: string
@@ -24,16 +24,16 @@ interface ShortLink {
 }
 
 function cleanDevice(device: string): string {
-  if (!device || device === 'desktop') return 'Desktop'
-  if (device.length <= 2 || /^[A-Z0-9\-]+$/.test(device)) return 'Android'
-  return device.charAt(0).toUpperCase() + device.slice(1)
+  if (!device || device === 'desktop') return 'desktop'
+  if (device.length <= 2 || /^[A-Z0-9\-]+$/.test(device)) return 'android'
+  return device.toLowerCase()
 }
 
 function StatBlock({ value, label }: { value: number; label: string }) {
   return (
     <div className="text-center">
-      <p className="text-[56px] font-semibold tracking-tight leading-none">{value}</p>
-      <p className="text-[#86868b] text-[14px] mt-1">{label}</p>
+      <p className="text-[44px] font-bold tracking-tight leading-none text-[#00ff41]">{value}</p>
+      <p className="text-[#00b32d] text-[12px] mt-1">{label}</p>
     </div>
   )
 }
@@ -41,20 +41,20 @@ function StatBlock({ value, label }: { value: number; label: string }) {
 function BreakdownCard({ title, data }: { title: string; data: Record<string, number> }) {
   const total = Object.values(data).reduce((a, b) => a + b, 0)
   return (
-    <div className="bg-[#f5f5f7] rounded-2xl p-6">
-      <h2 className="text-[13px] font-medium text-[#86868b] uppercase tracking-wider mb-4">{title}</h2>
+    <div className="border border-[#00ff41]/15 rounded-lg p-5 bg-[#0a0a0a]">
+      <h2 className="text-[11px] font-medium text-[#00b32d] uppercase tracking-widest mb-4">{title}</h2>
       <div className="flex flex-col gap-3">
         {Object.entries(data)
           .sort((a, b) => b[1] - a[1])
           .map(([label, count]) => (
             <div key={label}>
-              <div className="flex justify-between text-[15px] mb-1.5">
-                <span className="text-[#1d1d1f] capitalize">{label}</span>
-                <span className="text-[#86868b]">{count}</span>
+              <div className="flex justify-between text-[13px] mb-1">
+                <span className="text-white/80">{label}</span>
+                <span className="text-[#00b32d]">{count}</span>
               </div>
-              <div className="h-[3px] bg-[#e8e8ed] rounded-full overflow-hidden">
+              <div className="h-[3px] bg-[#00ff41]/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#0071e3] rounded-full transition-all"
+                  className="h-full bg-[#00ff41] rounded-full transition-all"
                   style={{ width: `${(count / total) * 100}%` }}
                 />
               </div>
@@ -104,8 +104,8 @@ export default function LinkPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-[#e8e8ed] border-t-[#0071e3] rounded-full animate-spin" />
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-[#00ff41]/20 border-t-[#00ff41] rounded-full animate-spin" />
       </div>
     )
   }
@@ -116,7 +116,7 @@ export default function LinkPage() {
 
   const byLocation = clicks.reduce((acc, c) => {
     const city = c.city && c.city !== 'Unknown' && c.city !== '' ? c.city : null
-    const key = city ? `${city}, ${c.country}` : c.country || 'Unknown'
+    const key = city ? `${city}, ${c.country}` : c.country || 'unknown'
     acc[key] = (acc[key] || 0) + 1
     return acc
   }, {} as Record<string, number>)
@@ -139,7 +139,7 @@ export default function LinkPage() {
   }, {} as Record<string, number>)
 
   const byBrowser = clicks.reduce((acc, c) => {
-    acc[c.browser || 'Unknown'] = (acc[c.browser || 'Unknown'] || 0) + 1
+    acc[(c.browser || 'unknown').toLowerCase()] = (acc[(c.browser || 'unknown').toLowerCase()] || 0) + 1
     return acc
   }, {} as Record<string, number>)
 
@@ -157,78 +157,79 @@ export default function LinkPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-[#e8e8ed]">
-        <div className="max-w-[980px] mx-auto px-6 h-12 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[14px]">
-            <Link href="/" className="font-semibold text-[17px] tracking-tight mr-2">Shortify</Link>
-            <button onClick={() => router.push('/dashboard')} className="text-[#86868b] hover:text-[#1d1d1f] transition-colors">
-              Dashboard
+    <div className="min-h-screen bg-black">
+      <nav className="sticky top-0 z-50 bg-black/90 backdrop-blur-md border-b border-[#00ff41]/15">
+        <div className="max-w-[900px] mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Logo size="sm" />
+            <span className="text-[#00663a]">/</span>
+            <button onClick={() => router.push('/dashboard')} className="text-[12px] text-[#00b32d] hover:text-[#00ff41] transition-colors">
+              dashboard
             </button>
-            <span className="text-[#d2d2d7]">›</span>
-            <span className="text-[#1d1d1f] truncate max-w-[160px]">{link.title}</span>
+            <span className="text-[#00663a]">/</span>
+            <span className="text-[12px] text-white/70 truncate max-w-[140px]">{link.title}</span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-[12px] text-[#86868b] hidden sm:block">{user?.email}</span>
-            <button onClick={logout} className="text-[12px] text-[#0071e3] hover:underline">
-              Sign out
+            <span className="text-[11px] text-[#00663a] hidden sm:block">{user?.email}</span>
+            <button onClick={logout} className="text-[11px] border border-[#00ff41]/20 text-[#00b32d] hover:text-[#00ff41] hover:border-[#00ff41]/50 transition-colors px-3 py-1.5 rounded">
+              sign_out
             </button>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-[980px] mx-auto px-6 py-16">
+      <main className="max-w-[900px] mx-auto px-6 py-12">
         {/* Link header */}
-        <div className="flex justify-between items-start gap-4 mb-12">
+        <div className="border border-[#00ff41]/15 rounded-lg p-5 mb-8 flex justify-between items-start gap-4 bg-[#0a0a0a]">
           <div className="min-w-0">
-            <h1 className="text-[40px] font-semibold tracking-tight mb-1">{link.title}</h1>
-            <p className="text-[#0071e3] text-[17px]">{shortUrl.replace(/^https?:\/\//, '')}</p>
-            <p className="text-[#86868b] text-[14px] mt-1 truncate max-w-md">{link.original_url}</p>
+            <h1 className="text-[22px] font-bold text-white mb-1">{link.title}</h1>
+            <p className="text-[#00ff41] text-[13px] font-mono mb-1">{shortUrl.replace(/^https?:\/\//, '')}</p>
+            <p className="text-[#00663a] text-[11px] truncate max-w-sm">{link.original_url}</p>
           </div>
           <button
             onClick={handleCopy}
-            className="shrink-0 text-[13px] bg-[#f5f5f7] hover:bg-[#e8e8ed] transition-colors px-4 py-2 rounded-full font-medium"
+            className="shrink-0 text-[11px] border border-[#00ff41]/30 text-[#00b32d] hover:text-[#00ff41] hover:border-[#00ff41]/60 transition-colors px-3 py-1.5 rounded"
           >
-            {copied ? "Copied" : "Copy link"}
+            {copied ? "copied" : "copy_link"}
           </button>
         </div>
 
-        {/* Big stats row */}
-        <div className="grid grid-cols-3 gap-4 mb-12 py-10 bg-[#f5f5f7] rounded-2xl">
-          <StatBlock value={clicks.length} label="Total clicks" />
-          <StatBlock value={uniqueCountries} label="Countries" />
-          <StatBlock value={Object.keys(byDevice).length} label="Device types" />
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3 mb-6 border border-[#00ff41]/15 rounded-lg py-6 bg-[#0a0a0a]">
+          <StatBlock value={clicks.length} label="total_clicks" />
+          <StatBlock value={uniqueCountries} label="countries" />
+          <StatBlock value={Object.keys(byDevice).length} label="device_types" />
         </div>
 
         {/* Breakdowns */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <BreakdownCard title="Device" data={byDevice} />
-          <BreakdownCard title="Browser" data={byBrowser} />
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <BreakdownCard title="device" data={byDevice} />
+          <BreakdownCard title="browser" data={byBrowser} />
         </div>
-        <div className="mb-4">
-          <BreakdownCard title="Location" data={consolidatedLocation} />
+        <div className="mb-3">
+          <BreakdownCard title="location" data={consolidatedLocation} />
         </div>
 
         {/* Recent clicks */}
-        <div className="bg-[#f5f5f7] rounded-2xl p-6">
-          <h2 className="text-[13px] font-medium text-[#86868b] uppercase tracking-wider mb-4">Recent clicks</h2>
+        <div className="border border-[#00ff41]/15 rounded-lg p-5 bg-[#0a0a0a]">
+          <h2 className="text-[11px] font-medium text-[#00b32d] uppercase tracking-widest mb-4">recent_clicks</h2>
           {clicks.length === 0 && (
-            <p className="text-[#86868b] text-[15px] text-center py-6">No clicks yet</p>
+            <p className="text-[#00663a] text-[13px] text-center py-4">no clicks yet</p>
           )}
           {clicks.slice(0, 15).map(click => (
-            <div key={click.id} className="flex justify-between items-center py-3 border-b border-[#e8e8ed] last:border-0">
+            <div key={click.id} className="flex justify-between items-center py-2.5 border-b border-[#00ff41]/10 last:border-0">
               <div className="flex flex-col gap-0.5">
-                <span className="text-[15px] text-[#1d1d1f]">
+                <span className="text-[13px] text-white/80">
                   {click.city && click.city !== 'Unknown' && click.city !== ''
                     ? `${click.city}, ${click.country}`
-                    : click.country || 'Unknown'}
+                    : click.country || 'unknown'}
                 </span>
-                <span className="text-[13px] text-[#86868b] capitalize">
-                  {cleanDevice(click.device)} · {click.browser || 'Unknown'}
+                <span className="text-[11px] text-[#00663a]">
+                  {cleanDevice(click.device)} · {(click.browser || 'unknown').toLowerCase()}
                   {click.referrer ? ` · ${(() => { try { return new URL(click.referrer).hostname } catch { return click.referrer } })()}` : ''}
                 </span>
               </div>
-              <span className="text-[13px] text-[#86868b] shrink-0 ml-4">
+              <span className="text-[11px] text-[#00663a] shrink-0 ml-4">
                 {new Date(click.clicked_at).toLocaleString()}
               </span>
             </div>

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
+import { Logo } from "@/components/Logo"
 
 export default function AuthPage() {
   const [email, setEmail] = useState("")
@@ -31,60 +31,76 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <nav className="px-6 h-12 flex items-center border-b border-[#e8e8ed]">
-        <Link href="/" className="font-semibold text-[17px] tracking-tight">Shortify</Link>
+    <div className="min-h-screen bg-black flex flex-col">
+      <nav className="px-6 h-16 flex items-center border-b border-[#00ff41]/15">
+        <Logo size="md" />
       </nav>
 
       <div className="flex-1 flex items-center justify-center px-6 py-16">
-        <div className="w-full max-w-[380px]">
-          <h1 className="text-[32px] font-semibold tracking-tight text-center mb-1">
-            {isLogin ? "Sign in" : "Create your account"}
-          </h1>
-          <p className="text-[#86868b] text-[15px] text-center mb-10">
-            {isLogin ? "Welcome back to Shortify" : "Start shortening links in seconds"}
-          </p>
+        <div className="w-full max-w-[380px] border border-[#00ff41]/20 rounded-lg bg-[#0a0a0a] overflow-hidden">
+          <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-[#00ff41]/15 bg-[#00ff41]/5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
+            <span className="text-[11px] text-[#00b32d] ml-2">
+              {isLogin ? "auth/login.sh" : "auth/signup.sh"}
+            </span>
+          </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="bg-[#f5f5f7] border border-transparent rounded-xl px-4 py-3 text-[15px] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:bg-white transition-colors"
-              required
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="bg-[#f5f5f7] border border-transparent rounded-xl px-4 py-3 text-[15px] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] focus:bg-white transition-colors"
-              required
-            />
+          <div className="p-7">
+            <p className="text-[#00b32d] text-[13px] mb-6">
+              $ {isLogin ? "./sign-in" : "./create-account"}
+            </p>
 
-            {error && (
-              <p className="text-[#d70015] text-[13px] text-center">{error}</p>
-            )}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] text-[#00b32d] tracking-wide">EMAIL</label>
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className="bg-black border border-[#00ff41]/20 rounded px-3 py-2.5 text-[14px] text-white placeholder:text-white/20 focus:outline-none focus:border-[#00ff41]/60 transition-colors"
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] text-[#00b32d] tracking-wide">PASSWORD</label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="bg-black border border-[#00ff41]/20 rounded px-3 py-2.5 text-[14px] text-white placeholder:text-white/20 focus:outline-none focus:border-[#00ff41]/60 transition-colors"
+                  required
+                />
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-[#0071e3] text-white font-medium py-3 rounded-xl text-[15px] hover:bg-[#0077ed] transition-colors disabled:opacity-50 mt-1"
-            >
-              {loading ? "Please wait…" : isLogin ? "Sign in" : "Create account"}
-            </button>
-          </form>
+              {error && (
+                <p className="text-[#ff5f56] text-[12px] bg-[#ff5f56]/10 border border-[#ff5f56]/20 rounded px-3 py-2">
+                  error: {error}
+                </p>
+              )}
 
-          <p className="mt-8 text-center text-[13px] text-[#86868b]">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-            <button
-              onClick={() => { setIsLogin(!isLogin); setError("") }}
-              className="text-[#0071e3] hover:underline"
-            >
-              {isLogin ? "Sign up" : "Sign in"}
-            </button>
-          </p>
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-[#00ff41] text-black font-semibold py-2.5 rounded text-[14px] hover:bg-[#00e63b] transition-colors disabled:opacity-50 mt-1"
+              >
+                {loading ? "processing..." : isLogin ? "sign_in →" : "create_account →"}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-[12px] text-[#00b32d]">
+              {isLogin ? "no account?" : "have an account?"}{" "}
+              <button
+                onClick={() => { setIsLogin(!isLogin); setError("") }}
+                className="text-[#00ff41] hover:underline"
+              >
+                {isLogin ? "sign_up" : "sign_in"}
+              </button>
+            </p>
+          </div>
         </div>
       </div>
     </div>

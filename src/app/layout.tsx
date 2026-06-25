@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Shortify",
-  description: "Short links. Beautifully simple.",
+  title: "cachelink",
+  description: "Redis-cached redirects. Async event pipeline. Sub-3ms response.",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full bg-white text-[#1d1d1f] antialiased" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif' }}>
+      <body className="min-h-full bg-black text-[#00ff41] antialiased">
         {children}
       </body>
     </html>
